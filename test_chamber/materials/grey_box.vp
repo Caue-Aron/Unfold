@@ -1,0 +1,60 @@
+// std stuff
+attribute vec4 position;
+attribute vec2 texcoord0;
+attribute vec3 normal;
+
+uniform mat4 mtx_world;
+uniform mat4 mtx_view;
+uniform mat4 mtx_proj;
+uniform mat4 mtx_normal;
+
+uniform sampler2D floor;
+uniform sampler2D wall;
+uniform sampler2D ceiling;
+
+varying vec2 var_texcoord0;
+varying float diff_light;
+varying float texture_use;
+
+vec3 extractScale(mat4 model) {
+    float scaleX = length(model[0].xyz); // Length of the first column
+    float scaleY = length(model[1].xyz); // Length of the second column
+    float scaleZ = length(model[2].xyz); // Length of the third column
+    return vec3(scaleX, scaleY, scaleZ);
+}
+
+mat3 extractRotation(mat4 model) {
+    mat3 rot_matrix = mat3(model);
+    
+    rot_matrix[0] = normalize(rot_matrix[0]);
+    rot_matrix[1] = normalize(rot_matrix[1]);
+    rot_matrix[2] = normalize(rot_matrix[2]);
+    return rot_matrix;
+}
+
+void main()
+{
+    vec3 L = -normalize(vec3(0, -.5, -1));
+    vec3 N = normalize(vec3(mtx_normal * vec4(normal, 1.0)));
+
+    diff_light = max(dot(N, L), 0.0);
+
+    mat3 rot_matrix = extractRotation(mtx_world);
+    vec3 rot_normal = rot_matrix * normal;
+    vec3 scale = extractScale(mtx_world);
+    texture_use = dot(rot_normal, vec3(0.0, 1.0, 0.0));
+    
+    
+    float x_angle, z_angle;
+    x_angle = dot(rot_normal, vec3(1.0, 0.0, 0.0));
+    z_angle = dot(rot_normal, vec3(0.0, 0.0, 1.0));
+
+    if (x_angle < -0.35 || x_angle > 0.35)
+        var_texcoord0 = texcoord0 * scale.zy;
+    else if (z_angle < -0.35 || z_angle > 0.35)
+        var_texcoord0 = texcoord0 * scale.xy;
+    else
+        var_texcoord0 = texcoord0 * scale.xz;
+
+    gl_Position = mtx_proj * mtx_view * mtx_world * position;
+}

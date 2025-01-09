@@ -1,0 +1,25 @@
+local M = {}
+
+function M.get_commands()
+    return {
+        label = "Reset transform",
+        locations = { "Outline" },
+        query = { selection = { type = "outline", cardinality = "one" } },
+        active = function(opts)
+            local node = opts.selection
+            return editor.can_set(node, "position")
+                and editor.can_set(node, "rotation")
+                and editor.can_set(node, "scale")
+        end,
+        run = function(opts)
+            local node = opts.selection
+            editor.transact({
+                editor.tx.set(node, "position", { 0, 0, 0 }),
+                editor.tx.set(node, "rotation", { 0, 0, 0 }),
+                editor.tx.set(node, "scale", { 1, 1, 1 })
+            })
+        end
+    }
+end
+
+return M
