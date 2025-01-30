@@ -37,7 +37,7 @@ local collection = {
 	scale_along_z = 0
 }
 
-err = buddy_fold.tableToCollection(collection, "../example/example.collection")
+err = buddy_fold.TableToCollection(collection, "../example/example.collection")
 if err then
 	print(err)
 	return

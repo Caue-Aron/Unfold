@@ -1,4 +1,22 @@
-local function turnCollection(t, ident)
+function EndsWith(str, suffix)
+    return str:sub(- #suffix) == suffix
+end
+
+---@return table
+local function ShallowCopyTable(t)
+    local tt = {}
+    for key, value in pairs(t) do
+        ttype = type(value)
+        if ttype == "table" then
+            tt[key] = ShallowCopyTable(value)
+        elseif ttype ~= "nil" and ttype ~= "function" and ttype ~= "thread" and ttype ~= "userdata" then
+            tt[key] = value
+        end
+    end
+    return tt
+end
+
+local function TableToCollectionRaw(t, ident)
     ident = ident or 0
     local tab_char = "  "
     local prototext = ""
@@ -11,20 +29,20 @@ local function turnCollection(t, ident)
                 for i, vv in ipairs(v) do
                     prototext = prototext .. tostring(k) .. " {\n"
                     if type(vv) == "table" then
-                        prototext = prototext .. turnCollection(vv, ident + 1)
+                        prototext = prototext .. TableToCollectionRaw(vv, ident + 1)
                     end
                     prototext = prototext .. string.rep(tab_char, ident) .. "}\n"
                 end
             else
                 prototext = prototext .. tostring(k) .. " {\n"
-                prototext = prototext .. turnCollection(v, ident + 1)
+                prototext = prototext .. TableToCollectionRaw(v, ident + 1)
                 prototext = prototext .. string.rep(tab_char, ident) .. "}"
             end
         else
             prototext = prototext .. tostring(k) .. ": "
             -- special cases
             if k == "scale_along_z" then
-                prototext = prototext .. string.format("%.0f", v)
+                prototext = prototext .. string.format("%i", v)
             elseif type(v) == "nil" then
                 prototext = prototext .. "null"
             elseif type(v) == "number" then
@@ -42,25 +60,36 @@ local function turnCollection(t, ident)
     return prototext
 end
 
+-- Called in order to make the table succeptible to being turned into a collction
+local function TableToCollectionHelper(ot, ident)
+    local t = ShallowCopyTable(ot)
+    t.scale_along_z = t.scale_along_z or 0
+    return TableToCollectionRaw(t, ident)
+end
+
 local M = {}
 
 ---@param t table
 ---@param ouput_path string
----@return string?
-function M.tableToCollection(t, ouput_path)
-    local collection_str = M.tableToCollectionString(t)
+---@return string, string?
+function M.TableToCollection(t, ouput_path)
+    if not EndsWith(ouput_path, ".collection") then
+        ouput_path = ouput_path .. ".collection"
+    end
+    local collection_str = M.TableToCollectionString(t)
     local collection_file, err = io.open(ouput_path, "w+")
     if collection_file then
         collection_file:write(collection_str)
+        return ouput_path
     else
-        return err
+        return ouput_path, err
     end
 end
 
 ---@param t table
 ---@return string
-function M.tableToCollectionString(t)
-    local str = turnCollection(t, 0):gsub("\n\n+", "\n")
+function M.TableToCollectionString(t)
+    local str = TableToCollectionHelper(t):gsub("\n\n+", "\n")
     return str:sub(1, #str - 1)
 end
 

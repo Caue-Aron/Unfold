@@ -1,32 +1,32 @@
+scale_along_z: 0
 name: "main"
 instances {
-  position {
-    y: 4.000
-    z: 5.000
-  }
   prototype: "/rendy/rendy.go"
-  rotation {
-    w: 0.953
-    x: -0.302
-  }
   id: "rendy"
+  rotation {
+    w: 0.95343417
+    x: -0.30160126
+  }
+  position {
+    y: 4.0
+    z: 5.0
+  }
 }
 instances {
   prototype: "/test_chamber/full_level.go"
-  position {
-    z: 1.000
-  }
   id: "cube"
+  position {
+    z: 1.0
+  }
 }
 instances {
-  prototype: "/test_chamber/pillar.go"
   id: "pillar"
+  prototype: "/test_chamber/pillar.go"
 }
 instances {
   prototype: "/test_chamber/cube.go"
-  position {
-    x: -5.000
-  }
   id: "cube1"
+  position {
+    x: -5.0
+  }
 }
-scale_along_z: 0
