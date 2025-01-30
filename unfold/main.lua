@@ -1,4 +1,4 @@
-local buddy_fold = require 'buddy_fold'
+-- local buddy_fold = require 'buddy_fold'
 
 local collection = {
 	name = "main",
@@ -37,8 +37,10 @@ local collection = {
 	scale_along_z = 0
 }
 
-err = buddy_fold.TableToCollection(collection, "../example/example.collection")
-if err then
-	print(err)
-	return
-end
+print(debug.getinfo(1, "S").source)
+
+-- err = buddy_fold.TableToCollection(collection, "../example/example.collection")
+-- if err then
+-- 	print(err)
+-- 	return
+-- end

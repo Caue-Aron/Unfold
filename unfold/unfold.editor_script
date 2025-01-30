@@ -1,9 +1,5 @@
-local buddy_fold = require 'unfold.buddy_fold'
+local unfold = require 'unfold.unfold'
 local M = {}
-
-function EndsWith(str, suffix)
-    return str:sub(- #suffix) == suffix
-end
 
 function M.get_commands()
     return {
@@ -12,46 +8,17 @@ function M.get_commands()
             locations = { "Assets", "Edit" },
             query = { selection = { type = "resource", cardinality = "one" } },
             active = function(opts)
-                return EndsWith(editor.get(opts.selection, "path"), ".gltf")
+                return editor.get(opts.selection, "path"):EndsWith(".gltf")
             end,
             run = function(opts)
-                local path, err = buddy_fold.TableToCollection({
-                    name = "main",
-                    instances = {
-                        {
-                            id = "rendy",
-                            prototype = "/rendy/rendy.go",
-                            position = {
-                                y = 4.0,
-                                z = 5.0,
-                            },
-                            rotation = {
-                                x = -0.30160126,
-                                w = 0.95343417,
-                            }
-                        },
-                        {
-                            id = "cube",
-                            prototype = "/test_chamber/full_level.go",
-                            position = {
-                                z = 1.0,
-                            }
-                        },
-                        {
-                            id = "pillar",
-                            prototype = "/test_chamber/pillar.go",
-                        },
-                        {
-                            id = "cube1",
-                            prototype = "/test_chamber/cube.go",
-                            position = {
-                                x = -5.0,
-                            }
-                        }
-                    },
-                    scale_along_z = 0
-                }, "example/example")
-                print(err or ("Collection created sucessfully at " .. path))
+                -- test if debug table exists in editor_scripts
+                -- print(debug.getinfo(1, "S").source)
+                -- print("DEBUG:SCRIPT:")
+                -- print("INFO:SCRIPT:")
+                -- print("WARNING:SCRIPT:")
+                -- print("ERROR:SCRIPT:")
+                -- print("FATAL:SCRIPT:")
+                unfold.UnfoldString()
             end
         }
     }

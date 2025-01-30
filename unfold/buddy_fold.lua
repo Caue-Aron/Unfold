@@ -1,4 +1,7 @@
-function EndsWith(str, suffix)
+---@param str string
+---@param suffix string
+---@return boolean
+function string.EndsWith(str, suffix)
     return str:sub(- #suffix) == suffix
 end
 
@@ -67,13 +70,21 @@ local function TableToCollectionHelper(ot, ident)
     return TableToCollectionRaw(t, ident)
 end
 
+local function PreLog(msg)
+    local info = {}
+    if debug then
+        info.has_debug = true
+    end
+    return info
+end
+
 local M = {}
 
 ---@param t table
 ---@param ouput_path string
----@return string, string?
+---@return string
 function M.TableToCollection(t, ouput_path)
-    if not EndsWith(ouput_path, ".collection") then
+    if not ouput_path:EndsWith(".collection") then
         ouput_path = ouput_path .. ".collection"
     end
     local collection_str = M.TableToCollectionString(t)
@@ -82,7 +93,7 @@ function M.TableToCollection(t, ouput_path)
         collection_file:write(collection_str)
         return ouput_path
     else
-        return ouput_path, err
+        error(err)
     end
 end
 

@@ -19,9 +19,12 @@
     ],
     "Lua.workspace.library": [
         "~\\AppData\\Roaming\\Code\\User\\globalStorage\\astronachos.defold",
-        "~\\AppData\\Roaming\\Code\\User\\workspaceStorage\\dc00824145d7bd1df030156642c630db\\astronachos.defold"
+        "~\\AppData\\Roaming\\Code\\User\\workspaceStorage\\dc00824145d7bd1df030156642c630db\\astronachos.defold",
+        "~\\AppData\\Roaming\\Code\\User\\workspaceStorage\\1422f1d163c6b3fdc452c3e1eb15e961\\astronachos.defold"
     ],
     "files.associations": {
+        "*.csv": "csv",
+        "*.py": "python",
         "*.gltf": "json",
         "*.project": "ini",
         "*.script": "lua",
@@ -61,5 +64,6 @@
         "*.appmanifest": "yaml",
         "*.script_api": "yaml",
         "ext.manifest": "yaml"
-    }
+    },
+    "C_Cpp.errorSquiggles": "disabled"
 }

@@ -11,7 +11,7 @@ height = 640
 
 [project]
 title = Unfold
-dependencies#0 = https://github.com/britzl/defold-orthographic/archive/master.zip
+dependencies#0 = https://github.com/paweljarosz/squid/archive/refs/tags/1.2.zip
 
 [library]
 include_dirs = myextension
