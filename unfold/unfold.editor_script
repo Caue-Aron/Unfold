@@ -1,5 +1,10 @@
 local unfold = require 'unfold.unfold'
+local log = require 'unfold.unfold_log'
 local M = {}
+
+function string.TrimPath(str)
+    return str:sub(2, #str)
+end
 
 function M.get_commands()
     return {
@@ -11,14 +16,18 @@ function M.get_commands()
                 return editor.get(opts.selection, "path"):EndsWith(".gltf")
             end,
             run = function(opts)
-                -- test if debug table exists in editor_scripts
-                -- print(debug.getinfo(1, "S").source)
-                -- print("DEBUG:SCRIPT:")
-                -- print("INFO:SCRIPT:")
-                -- print("WARNING:SCRIPT:")
-                -- print("ERROR:SCRIPT:")
-                -- print("FATAL:SCRIPT:")
-                unfold.UnfoldString()
+                local scene_path = editor.get(opts.selection, "path")
+                scene_path = scene_path:sub(2, #scene_path)
+
+                local scene_file = io.open(scene_path, "r")
+                local scene_data
+                if scene_file then
+                    scene_data = scene_file:read("*a")
+                    scene_file:close()
+                else
+
+                end
+                unfold.UnfoldString(scene_data)
             end
         }
     }

@@ -1,16 +1,18 @@
-local JsonToLua = require 'unfold.json'.decode
-local buddy_fold = require 'unfold.buddy_fold'
+local helper = require 'unfold.unfold_helper'
+local log = require 'unfold.unfold_log'
+local Decode = require 'unfold.json'.decode
 
 local M = {}
 
----@param gltf string
----@param config table
----@return boolean, string
-function M.UnfoldString(gltf, config)
-    local json_success, result = pcall(JsonToLua, gltf)
-    if not json_success then
-
-    end
+---@param data string
+---@param config table?
+---@return string
+function M.UnfoldString(data, config)
+    local scene_data = Decode(data)
+    local unfolded_collection = {
+        name = scene_data.scenes[1].name
+    }
+    log.Debug(unfolded_collection.name)
 end
 
 return M

@@ -11,7 +11,8 @@ height = 640
 
 [project]
 title = Unfold
-dependencies#0 = https://github.com/paweljarosz/squid/archive/refs/tags/1.2.zip
+dependencies = 
+write_log = 0
 
 [library]
 include_dirs = myextension

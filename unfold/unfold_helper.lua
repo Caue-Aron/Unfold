@@ -70,14 +70,6 @@ local function TableToCollectionHelper(ot, ident)
     return TableToCollectionRaw(t, ident)
 end
 
-local function PreLog(msg)
-    local info = {}
-    if debug then
-        info.has_debug = true
-    end
-    return info
-end
-
 local M = {}
 
 ---@param t table
