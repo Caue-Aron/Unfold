@@ -1,5 +1,6 @@
 local unfold = require 'unfold.unfold'
 local log = require 'unfold.unfold_log'
+local config = require 'unfold.myconfig'
 local M = {}
 
 function string.TrimPath(str)
@@ -27,7 +28,7 @@ function M.get_commands()
                 else
 
                 end
-                unfold.UnfoldString(scene_data)
+                unfold.UnfoldString(scene_data, config)
             end
         }
     }

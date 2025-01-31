@@ -1,0 +1,78 @@
+scale_along_z: 0
+name: "Scene"
+instances {
+  rotation {
+    y: 0
+    x: 0
+    z: 0
+  }
+  position {
+    y: 1.332
+    x: -3.972
+    z: 3.527
+  }
+  id: "Cube"
+  prototype: "/test_chamber/cube.go"
+  scale3 {
+    y: 1
+    x: 1
+    z: 1
+  }
+}
+instances {
+  rotation {
+    y: 0
+    x: 0
+    z: 0
+  }
+  position {
+    y: -2.903
+    x: 4.733
+    z: -2.104
+  }
+  id: "Cube.001"
+  prototype: "/test_chamber/cube.go"
+  scale3 {
+    y: 1
+    x: 1
+    z: 1
+  }
+}
+instances {
+  rotation {
+    y: 0
+    x: 0
+    z: 0
+  }
+  position {
+    y: -4.911
+    x: -2.833
+    z: -0.114
+  }
+  id: "Cube.003"
+  prototype: "/test_chamber/cube.go"
+  scale3 {
+    y: 1
+    x: 1
+    z: 1
+  }
+}
+instances {
+  rotation {
+    y: 0
+    x: 0
+    z: 0
+  }
+  position {
+    y: 0
+    x: 0
+    z: 0
+  }
+  id: "Cube.004"
+  prototype: "/test_chamber/pillar.go"
+  scale3 {
+    y: 1
+    x: 1
+    z: 1
+  }
+}

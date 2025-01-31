@@ -49,7 +49,7 @@ local function TableToCollectionRaw(t, ident)
             elseif type(v) == "nil" then
                 prototext = prototext .. "null"
             elseif type(v) == "number" then
-                prototext = prototext .. string.format("%.3f", v)
+                prototext = prototext .. math.floor(v * 1000 + 0.5) / 1000
             elseif type(v) == "string" then
                 prototext = prototext .. string.format('"%s"', v)
             elseif type(v) ~= "thread" and type(v) ~= "function" and type(v) ~= "userdata" then
@@ -57,6 +57,7 @@ local function TableToCollectionRaw(t, ident)
             end
         end
 
+        -- prototext = prototext .. "\t" .. type(v) .. "\n"
         prototext = prototext .. "\n"
     end
 
