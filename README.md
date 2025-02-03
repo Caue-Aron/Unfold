@@ -1,24 +1,33 @@
 # TODO List
 
 ## Parser
-- [ ] Support multiple and nested scenes/collections
-- [ ] Implement parenting
+- [ ] Support Multiple and Nested Scenes/Collections
+- [ ] Implement Parenting: Ensure proper parent-child relationships for objects
 
 ## Error Data Output to Console
-- [ ] GLTF missing required data:
-  - [ ] _id and other required Unfold properties
-- [ ] GLTF not properly built
-- [ ] File does not exist
+- [ ] GLTF Missing Required Data
+    - [ ] `_id` and other required Unfold properties
+    - [ ] Missing required properties in the config file
+- [ ] GLTF Not Properly Built: Handle improper GLTF structure and notify the user
 
 ## Config File
-- [ ] Choose config file
-- [ ] Save previously used config file for GLTF scenes
-- [ ] Better modding options:
-  - [ ] Get suggestions from users (hopefully)
+- [x] Choose Config File: Provide an option to select a config file
+    - [ ] Choose between quick `_id` setup and config file
+    - [ ] Save previously used config file
+- [ ] Quick `_id` Setup
+    - [ ] UI to setup `_id` for GLTF scene
+    - [ ] Save the quick `_id` setup as a file for future use
+- [ ] Better Modding Options: Enhance modding capabilities
+    - [ ] Get suggestions from users (hopefully)
 
-## Blender
-- [ ] Unfold Extension
+## Blender Integration
+- [ ] Unfold Extension Addon
+    - [ ] Refine code for already built scripts
+    - [ ] Create actuall add-on
+- [ ] Fine Tunning
+    - [ ] UI to create nodes with required variables pre-configured for ease of use
+    - [ ] Take suggestions
 
 ---
 
-**Please leave a suggestion!**
+Please leave a suggestion! I'd really appreciate your feedback!

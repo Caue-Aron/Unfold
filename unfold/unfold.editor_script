@@ -1,6 +1,5 @@
 local unfold = require 'unfold.unfold'
 local log = require 'unfold.unfold_log'
-local config = require 'unfold.myconfig'
 local M = {}
 
 function string.TrimPath(str)
@@ -17,6 +16,22 @@ function M.get_commands()
                 return editor.get(opts.selection, "path"):EndsWith(".gltf")
             end,
             run = function(opts)
+                -- config file setup
+                local config_path = editor.ui.show_resource_dialog({
+                    extensions = { "lua" },
+                    title = "Select a configuration lua file"
+                })
+                if not config_path then
+                    return
+                end
+                config_path = config_path:sub(2, #config_path)
+
+                local config = dofile(config_path)
+                if not config then
+                    log.Error("Configuration file must return a table")
+                end
+
+                -- scene data setup
                 local scene_path = editor.get(opts.selection, "path")
                 scene_path = scene_path:sub(2, #scene_path)
 
