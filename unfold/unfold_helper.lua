@@ -73,6 +73,19 @@ end
 
 local M = {}
 
+---@param t array
+---@param tv any
+---@return boolean
+function M.AppendDistinct(t, tv)
+    for i = 1, #t do
+        if t[i] == tv then
+            return false
+        end
+    end
+
+    return true
+end
+
 ---@param t table
 ---@param ouput_path string
 ---@return string

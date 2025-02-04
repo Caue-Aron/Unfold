@@ -4,6 +4,9 @@
 - [ ] Support Multiple and Nested Scenes/Collections
 - [ ] Implement Parenting: Ensure proper parent-child relationships for objects
 
+## UI
+- [ ] Choose output path
+
 ## Error Data Output to Console
 - [ ] GLTF Missing Required Data
     - [ ] `_id` and other required Unfold properties

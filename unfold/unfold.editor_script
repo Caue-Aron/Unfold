@@ -19,7 +19,7 @@ function M.get_commands()
                 -- config file setup
                 local config_path = editor.ui.show_resource_dialog({
                     extensions = { "lua" },
-                    title = "Select a configuration lua file"
+                    title = "Select a configuration file"
                 })
                 if not config_path then
                     return
@@ -43,7 +43,7 @@ function M.get_commands()
                 else
 
                 end
-                unfold.UnfoldString(scene_data, config)
+                local unfolded_collection = unfold.UnfoldString(scene_data, config)
             end
         }
     }
