@@ -72,13 +72,73 @@ local function SceneToCollection(scene, unfolded_nodes)
     return collection
 end
 
+---@param config_path string|table
+---@return table
+local function AssertConfigFile(config_path)
+    ---@type UnfoldConfig
+    local config_table
+    local config_path_type = type(config_path)
+    if config_path_type == "string" then
+        if config_path:sub(1, 1) == "/" then
+            config_table = dofile(config_path:sub(2, #config_path))
+        else
+            config_table = dofile(config_path)
+        end
+
+        local config_type = type(config_table)
+        if config_type == "nil" then
+            error("Configuration file " .. config_path .. " must return a table.")
+        elseif type(config_table) ~= "table" then
+            error("Configuration returns " .. config_type .. ". `Table` expected")
+        end
+    elseif config_path_type ~= "table" then
+        config_table = config_path
+    else
+        error("Invalid config type: `" .. config_path_type .. "`. Expected table or path.")
+    end
+
+    if type(config_table._id) ~= "table" then
+        error("Configuration file's `_id` field is `" ..
+            type(config_table._id) .. "`. Expected an array of strings")
+    end
+
+    return config_table
+end
+
+---@param scene_path string|table
+---@return table
+local function AssertSceneFile(scene_path)
+    local scene_table
+    local scene_json
+    local scene_path_type = type(scene_path)
+    if scene_path_type == "string" then
+        local first_char = scene_path:sub(1, 1)
+        if first_char == "/" then
+            local scene_file, err = io.open(scene_path, "r")
+            if scene_file then
+                scene_json = scene_file:read("*a")
+                scene_file:close()
+            else
+                error(err)
+            end
+        elseif first_char == "{" then
+            scene_json = scene_path
+        end
+        scene_table = Decode(scene_json)
+    elseif scene_path_type == "table" then
+        scene_table = scene_path
+    end
+
+    return scene_table
+end
+
 local M = {}
 local AppendDistinct = helper.AppendDistinct
 
----@param data JSON
+---@param scene JSON
 ---@return string[]
-function M.GetDistinctID(data)
-    local scene_data = Decode(data)
+function M.GetDistinctID(scene)
+    local scene_data = Decode(scene)
 
     local nodes = scene_data.nodes
     local scenes = scene_data.scenes
@@ -104,15 +164,16 @@ function M.GetDistinctID(data)
     return ids
 end
 
----@param data JSON
----@param config table
+---@param scene_path string|table
+---@param config_path string|table
 ---@return string
-function M.UnfoldString(data, config)
-    local scene_data = Decode(data)
+function M.UnfoldString(scene_path, config_path)
+    local config = AssertConfigFile(config_path)
+    local scene = AssertSceneFile(scene_path)
 
-    local nodes = scene_data.nodes
-    local scenes = scene_data.scenes
-    local root_scene_idx = scene_data.scene + 1
+    local nodes = scene.nodes
+    local scenes = scene.scenes
+    local root_scene_idx = scene.scene + 1
 
     local unfolded_nodes = {}
     local node
@@ -135,6 +196,13 @@ function M.UnfoldString(data, config)
     local unfolded_collection = unfolded_scenes[root_scene_idx]
 
     return helper.TableToCollectionString(unfolded_collection)
+end
+
+---@param scene_path string|table
+---@param config_path string|table
+---@param output_path string
+function M.UnfoldFile(scene_path, config_path, output_path)
+    local unfolded_collection = M.UnfoldString(scene_path, config_path)
 end
 
 return M

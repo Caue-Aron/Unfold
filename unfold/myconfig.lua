@@ -6,5 +6,3 @@ local M = {
         cube_parent = "/test_chamber/cube.go",
     }
 }
-
-return M

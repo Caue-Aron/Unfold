@@ -68,7 +68,7 @@ end
 local function TableToCollectionHelper(ot, ident)
     local t = ShallowCopyTable(ot)
     t.scale_along_z = t.scale_along_z or 0
-    return TableToCollectionRaw(t, ident)
+    return TableToCollectionRaw(t, ident):gsub("\n\n+", "\n")
 end
 
 local M = {}
@@ -106,7 +106,7 @@ end
 ---@param t table
 ---@return string
 function M.TableToCollectionString(t)
-    local str = TableToCollectionHelper(t):gsub("\n\n+", "\n")
+    local str = TableToCollectionHelper(t)
     return str:sub(1, #str - 1)
 end
 
