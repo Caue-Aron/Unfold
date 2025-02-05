@@ -5,6 +5,10 @@ function string.EndsWith(str, suffix)
     return str:sub(- #suffix) == suffix
 end
 
+function string.TrimPath(str)
+    return str:sub(1, #str)
+end
+
 ---@return table
 local function ShallowCopyTable(t)
     local tt = {}

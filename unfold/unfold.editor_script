@@ -2,9 +2,70 @@ local unfold = require 'unfold.unfold'
 local log = require 'unfold.unfold_log'
 local M = {}
 
-function string.TrimPath(str)
-    return str:sub(2, #str)
+local function toggle(n, v)
+    return v
 end
+local unfold_dialog = editor.ui.component(function(props)
+    local config_path, set_config_path = editor.ui.use_state("")
+    local config_file_severity, set_config_file_severity = editor.ui.use_state(editor.ui.ISSUE_SEVERITY.WARNING)
+    local config_file_severity_msg, set_config_file_severity_msg = editor.ui.use_state("Required")
+
+    return editor.ui.dialog({
+        title = props.title,
+        content = editor.ui.grid({
+            padding = editor.ui.PADDING.LARGE,
+            columns = { {}, { grow = true } },
+            children = {
+                {
+                    editor.ui.label({
+                        text = "Configuration File",
+                        alignment = editor.ui.ALIGNMENT.RIGHT,
+                    }),
+                    editor.ui.resource_field({
+                        title = "Select Configuration file",
+                        extensions = { "lua" },
+                        issue = { severity = config_file_severity, message = config_file_severity_msg },
+                        on_value_changed = function(path)
+                            if not path or path == "" then
+                                set_config_file_severity(toggle, editor.ui.ISSUE_SEVERITY.WARNING)
+                                set_config_file_severity_msg(toggle, "Required")
+                                return
+                            end
+                            if path:EndsWith(".lua") then
+                                local file = io.open(path:TrimPath(), "r")
+                                if file then
+                                    file:close()
+                                    set_config_file_severity(toggle, editor.ui.ISSUE_SEVERITY.WARNING)
+                                    set_config_file_severity_msg(toggle, "Required")
+                                    set_config_path(toggle, path)
+                                    return
+                                end
+                            end
+                            set_config_file_severity(toggle, editor.ui.ISSUE_SEVERITY.ERROR)
+                            set_config_file_severity_msg(toggle, "Invalid path")
+                        end
+                    })
+                }
+            }
+        }),
+        buttons = {
+            editor.ui.dialog_button({
+                text = "Cancel",
+                result = nil,
+            }),
+            editor.ui.dialog_button({
+                text = "Quick Configuration Setup",
+                result = "config",
+            }),
+            editor.ui.dialog_button({
+                text = "Create Collection",
+                result = config_path,
+                default = true,
+                enabled = config_path ~= ""
+            }),
+        }
+    })
+end)
 
 function M.get_commands()
     return {
@@ -16,46 +77,8 @@ function M.get_commands()
                 return editor.get(opts.selection, "path"):EndsWith(".gltf")
             end,
             run = function(opts)
-                -- local scene_path = editor.get(opts.selection, "path")
-                local config_path
-                local function toggle(n, v)
-                    return v
-                end
-                -- local can_create, set_can_create = editor.ui.use_state(true)
-                local result = editor.ui.show_dialog(editor.ui.dialog({
-                    title = "Unfold",
-                    content = editor.ui.grid({
-                        padding = editor.ui.PADDING.LARGE,
-                        columns = { {}, { grow = true } },
-                        children = {
-                            {
-                                editor.ui.label({
-                                    text = "Configuration File",
-                                    alignment = editor.ui.ALIGNMENT.RIGHT
-                                }),
-                                editor.ui.resource_field({
-                                    title = "Select Configuration file",
-                                    extensions = { "lua" },
-                                    on_value_changed = function(path)
-                                        config_path = path
-                                    end
-                                })
-                            }
-                        }
-                    }),
-                    buttons = {
-                        editor.ui.dialog_button({
-                            text = "Quick Configuration Setup",
-                            result = "config",
-                        }),
-                        editor.ui.dialog_button({
-                            text = "Create Collection",
-                            result = "created",
-                            default = true,
-                            enabled = can_create
-                        }),
-                    }
-                }))
+                local scene_path = editor.get(opts.selection, "path")
+                local config_path = editor.ui.show_dialog(unfold_dialog({ title = "Unfold" }))
 
                 -- unfold.UnfoldFile(scene_path, config_path, "")
             end
