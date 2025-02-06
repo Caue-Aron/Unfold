@@ -90,27 +90,27 @@ function M.get_commands()
                 local path, name = string.GetPathAndFile(string.TrimPath(scene_path))
                 name = string.StripExtension(name)
                 local result = editor.ui.show_dialog(unfold_dialog({ title = "Unfold", scene_name = name }))
-                local config_path = result.config_path
-                if #result.output_name == 0 then
-                    name = name
-                else
-                    name = result.output_name
-                end
 
-                if config_path then
-                    if config_path == "config" then
-                        log.Debug(
-                            "This functionality is still missing. Help my anxiety and voices from head win at: https://github.com/Caue-Aron/Unfold")
-                        return
+                if type(result) == "table" then
+                    if #result.output_name == 0 then
+                        name = name
+                    else
+                        name = result.output_name
                     end
+                    local config_path = result.config_path
 
                     local output_path = editor.ui.show_external_directory_dialog({
                         title = "Output path",
                         path = path
                     })
-                    local full_path = output_path .. "/" .. name .. ".collection"
-                    unfold.UnfoldFile(scene_path, config_path, full_path)
-                    log.Debug("Collection properly created at /" .. full_path:gsub("\\", "/"))
+                    if output_path then
+                        local full_path = output_path .. "/" .. name .. ".collection"
+                        unfold.UnfoldFile(scene_path, config_path, full_path)
+                        log.Debug("Collection properly created at /" .. full_path:gsub("\\", "/"))
+                    end
+                elseif type(result) == "string" then
+                    log.Debug(
+                        "This functionality is still missing. Help my anxiety and voices from head win at: https://github.com/Caue-Aron/Unfold")
                 end
             end
         }
