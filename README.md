@@ -5,18 +5,19 @@
 - [ ] Implement Parenting: Ensure proper parent-child relationships for objects
 
 ## UI
-- [ ] Choose output path
+- [x] Choose output path
 
 ## Error Data Output to Console
 - [ ] GLTF Missing Required Data
-    - [ ] `_id` and other required Unfold properties
+    - [x] `_id` and other required Unfold properties
     - [ ] Missing required properties in the config file
 - [ ] GLTF Not Properly Built: Handle improper GLTF structure and notify the user
 
 ## Config File
-- [x] Choose Config File: Provide an option to select a config file
-    - [ ] Choose between quick `_id` setup and config file
-    - [ ] Save previously used config file
+- [ ] Config File
+    - [x] Provide an option to select a config file
+    - [x] Choose between quick `_id` setup and config file
+    - [ ] Save previously used config file path
 - [ ] Quick `_id` Setup
     - [ ] UI to setup `_id` for GLTF scene
     - [ ] Save the quick `_id` setup as a file for future use

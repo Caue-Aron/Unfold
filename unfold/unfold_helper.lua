@@ -1,12 +1,33 @@
+local log = require 'unfold.unfold_log'
+
 ---@param str string
 ---@param suffix string
 ---@return boolean
 function string.EndsWith(str, suffix)
+    print(str:sub(- #suffix) == suffix)
     return str:sub(- #suffix) == suffix
 end
 
 function string.TrimPath(str)
-    return str:sub(1, #str)
+    return str:sub(2)
+end
+
+function string.GetPathAndFile(path)
+    return string.match(path, "(.*)/([^/]+)")
+end
+
+function string.StripExtension(path)
+    return path:match("^(.-)%.%w+$"), path:match("%.([%w_]+)$")
+end
+
+function io.CheckFileExists(path)
+    local file, err = io.open(path, "r")
+    if file then
+        file:close()
+        return true
+    else
+        return false
+    end
 end
 
 ---@return table

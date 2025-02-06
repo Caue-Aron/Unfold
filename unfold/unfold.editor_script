@@ -7,6 +7,7 @@ local function toggle(n, v)
 end
 local unfold_dialog = editor.ui.component(function(props)
     local config_path, set_config_path = editor.ui.use_state("")
+    local output_name, set_output_path = editor.ui.use_state(props.scene_name)
     local config_file_severity, set_config_file_severity = editor.ui.use_state(editor.ui.ISSUE_SEVERITY.WARNING)
     local config_file_severity_msg, set_config_file_severity_msg = editor.ui.use_state("Required")
 
@@ -16,6 +17,16 @@ local unfold_dialog = editor.ui.component(function(props)
             padding = editor.ui.PADDING.LARGE,
             columns = { {}, { grow = true } },
             children = {
+                {
+                    editor.ui.label({
+                        text = "Collection Name",
+                        alignment = editor.ui.ALIGNMENT.RIGHT,
+                    }),
+                    editor.ui.string_field({
+                        value = props.scene_name,
+                        on_value_changed = set_output_path
+                    })
+                },
                 {
                     editor.ui.label({
                         text = "Configuration File",
@@ -32,9 +43,8 @@ local unfold_dialog = editor.ui.component(function(props)
                                 return
                             end
                             if path:EndsWith(".lua") then
-                                local file = io.open(path:TrimPath(), "r")
-                                if file then
-                                    file:close()
+                                local file_exists = io.CheckFileExists(string.TrimPath(path))
+                                if file_exists then
                                     set_config_file_severity(toggle, editor.ui.ISSUE_SEVERITY.WARNING)
                                     set_config_file_severity_msg(toggle, "Required")
                                     set_config_path(toggle, path)
@@ -50,8 +60,7 @@ local unfold_dialog = editor.ui.component(function(props)
         }),
         buttons = {
             editor.ui.dialog_button({
-                text = "Cancel",
-                result = nil,
+                text = "Cancel"
             }),
             editor.ui.dialog_button({
                 text = "Quick Configuration Setup",
@@ -59,7 +68,7 @@ local unfold_dialog = editor.ui.component(function(props)
             }),
             editor.ui.dialog_button({
                 text = "Create Collection",
-                result = config_path,
+                result = { config_path = config_path, output_name = output_name },
                 default = true,
                 enabled = config_path ~= ""
             }),
@@ -78,9 +87,31 @@ function M.get_commands()
             end,
             run = function(opts)
                 local scene_path = editor.get(opts.selection, "path")
-                local config_path = editor.ui.show_dialog(unfold_dialog({ title = "Unfold" }))
+                local path, name = string.GetPathAndFile(string.TrimPath(scene_path))
+                name = string.StripExtension(name)
+                local result = editor.ui.show_dialog(unfold_dialog({ title = "Unfold", scene_name = name }))
+                local config_path = result.config_path
+                if #result.output_name == 0 then
+                    name = name
+                else
+                    name = result.output_name
+                end
 
-                -- unfold.UnfoldFile(scene_path, config_path, "")
+                if config_path then
+                    if config_path == "config" then
+                        log.Debug(
+                            "This functionality is still missing. Help my anxiety and voices from head win at: https://github.com/Caue-Aron/Unfold")
+                        return
+                    end
+
+                    local output_path = editor.ui.show_external_directory_dialog({
+                        title = "Output path",
+                        path = path
+                    })
+                    local full_path = output_path .. "/" .. name .. ".collection"
+                    unfold.UnfoldFile(scene_path, config_path, full_path)
+                    log.Debug("Collection properly created at /" .. full_path:gsub("\\", "/"))
+                end
             end
         }
     }

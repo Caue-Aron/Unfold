@@ -13,23 +13,23 @@ local function Log(severity, tag, subtag, msg)
 end
 
 function M.Error(msg)
-    print("ERROR:UNFOLD: " .. (msg or "nil"))
+    print("ERROR:UNFOLD: " .. tostring(msg))
 end
 
 function M.Warning(msg)
-    print("WARNING:UNFOLD: " .. (msg or "nil"))
+    print("WARNING:UNFOLD: " .. tostring(msg))
 end
 
 function M.Debug(msg)
-    print("DEBUG:UNFOLD: " .. (msg or "nil"))
+    print("DEBUG:UNFOLD: " .. tostring(msg))
 end
 
 function M.Info(msg)
-    print("INFO:UNFOLD: " .. (msg or "nil"))
+    print("INFO:UNFOLD: " .. tostring(msg))
 end
 
 function M.Fatal(msg)
-    print("FATAL:UNFOLD: " .. (msg or "nil"))
+    print("FATAL:UNFOLD: " .. tostring(msg))
 end
 
 return M

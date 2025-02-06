@@ -80,7 +80,7 @@ local function AssertConfigFile(config_path)
     local config_path_type = type(config_path)
     if config_path_type == "string" then
         if config_path:sub(1, 1) == "/" then
-            config_table = dofile(config_path:sub(2, #config_path))
+            config_table = dofile(string.TrimPath(config_path))
         else
             config_table = dofile(config_path)
         end
@@ -113,7 +113,12 @@ local function AssertSceneFile(scene_path)
     local scene_path_type = type(scene_path)
     if scene_path_type == "string" then
         local first_char = scene_path:sub(1, 1)
-        if first_char == "/" then
+        if first_char == "{" then
+            scene_json = scene_path
+        else
+            if first_char == "/" then
+                scene_path = string.TrimPath(scene_path)
+            end
             local scene_file, err = io.open(scene_path, "r")
             if scene_file then
                 scene_json = scene_file:read("*a")
@@ -121,8 +126,6 @@ local function AssertSceneFile(scene_path)
             else
                 error(err)
             end
-        elseif first_char == "{" then
-            scene_json = scene_path
         end
         scene_table = Decode(scene_json)
     elseif scene_path_type == "table" then
@@ -203,6 +206,13 @@ end
 ---@param output_path string
 function M.UnfoldFile(scene_path, config_path, output_path)
     local unfolded_collection = M.UnfoldString(scene_path, config_path)
+    local test, err = io.open(output_path, "w+")
+    if test then
+        test:write(unfolded_collection)
+        test:close()
+    else
+        error(err)
+    end
 end
 
 return M
