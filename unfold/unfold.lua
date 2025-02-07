@@ -78,6 +78,7 @@ local function AssertConfigFile(config_path)
     ---@type UnfoldConfig
     local config_table
     local config_path_type = type(config_path)
+
     if config_path_type == "string" then
         if config_path:sub(1, 1) == "/" then
             config_table = dofile(string.TrimPath(config_path))
@@ -91,7 +92,7 @@ local function AssertConfigFile(config_path)
         elseif type(config_table) ~= "table" then
             error("Configuration returns " .. config_type .. ". `Table` expected")
         end
-    elseif config_path_type ~= "table" then
+    elseif config_path_type == "table" then
         config_table = config_path
     else
         error("Invalid config type: `" .. config_path_type .. "`. Expected table or path.")
@@ -135,32 +136,57 @@ local function AssertSceneFile(scene_path)
     return scene_table
 end
 
+local function AdjustNode(node)
+    local extras = node.extras
+    if extras then
+        for k, v in pairs(extras) do
+            node[k] = v
+        end
+        node.extras = nil
+    end
+end
+
+local function AdjustScene(scene)
+    local extras = scene.extras
+    if extras then
+        for k, v in pairs(extras) do
+            scene[k] = v
+        end
+        scene.extras = nil
+    end
+end
+
 local M = {}
 local AppendDistinct = helper.AppendDistinct
 
----@param scene JSON
+---@param scene_path string|JSON
 ---@return string[]
-function M.GetDistinctID(scene)
-    local scene_data = Decode(scene)
+function M.GetDistinctID(scene_path)
+    local scene_data = AssertSceneFile(scene_path)
 
     local nodes = scene_data.nodes
     local scenes = scene_data.scenes
 
-    local ids = {}
+    local ids = {
+        nodes = {},
+        scenes = {}
+    }
 
     local node
     for i = 1, #nodes do
         node = nodes[i]
+        AdjustNode(node)
         if node._id then
-            AppendDistinct(ids, node._id)
+            AppendDistinct(ids.nodes, node._id)
         end
     end
 
     local scene
     for i = 1, #scenes do
         scene = scenes[i]
+        AdjustScene(scene)
         if scene._id then
-            AppendDistinct(ids, scene._id)
+            AppendDistinct(ids.scenes, scene._id)
         end
     end
 
@@ -182,10 +208,7 @@ function M.UnfoldString(scene_path, config_path)
     local node
     for i = 1, #nodes do
         node = nodes[i]
-        for k, v in pairs(node.extras) do
-            node[k] = v
-        end
-        node.extras = nil
+        AdjustNode(node)
         unfolded_nodes[#unfolded_nodes + 1] = NodeToEmbeddedGO(node, config)
     end
 
@@ -193,6 +216,7 @@ function M.UnfoldString(scene_path, config_path)
     local scene
     for i = 1, #scenes do
         scene = scenes[i]
+        AdjustScene(scene)
         unfolded_scenes[#unfolded_scenes + 1] = SceneToCollection(scene, unfolded_nodes)
     end
 

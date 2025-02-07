@@ -6,6 +6,9 @@
     "scene": 0,
     "scenes": [
         {
+            "extras": {
+                "_id": "test_scene"
+            },
             "name": "Scene",
             "nodes": [
                 0,
@@ -76,7 +79,7 @@
                 1.0
             ],
             "extras": {
-                "_id": "cube_parent"
+                "_id": "pillar"
             },
             "children": [
                 0,
@@ -101,7 +104,7 @@
                 1.0
             ],
             "extras": {
-                "_id": "cylinder"
+                "_id": "cube"
             }
         }
     ]

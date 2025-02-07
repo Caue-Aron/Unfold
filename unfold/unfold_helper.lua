@@ -4,7 +4,6 @@ local log = require 'unfold.unfold_log'
 ---@param suffix string
 ---@return boolean
 function string.EndsWith(str, suffix)
-    print(str:sub(- #suffix) == suffix)
     return str:sub(- #suffix) == suffix
 end
 
@@ -108,6 +107,7 @@ function M.AppendDistinct(t, tv)
         end
     end
 
+    t[#t + 1] = tv
     return true
 end
 

@@ -1,15 +1,81 @@
 local unfold = require 'unfold.unfold'
 local log = require 'unfold.unfold_log'
+local json = require 'unfold.json'
 local M = {}
 
 local function toggle(n, v)
     return v
 end
+
+local quick_config_dialog = editor.ui.component(function(props)
+    local ids = props.ids
+    local nodes_ids = ids.nodes
+    local scene_ids = ids.scenes
+    local children = {}
+    local config_id = {}
+    local amount_id = #nodes_ids -- + #scene_ids
+    local id_ready, set_id_ready = editor.ui.use_state(0)
+
+    local on_value_changed = function(path, node_id)
+        if string.EndsWith(path, ".go") then
+            local file_exists = io.CheckFileExists(string.TrimPath(path))
+            if file_exists then
+                config_id[node_id] = path
+                return true
+            end
+        end
+        config_id[node_id] = nil
+    end
+
+    for i = 1, #nodes_ids do
+        local node_id = nodes_ids[i]
+        children[#children + 1] = {
+            editor.ui.label({
+                text = node_id,
+                alignment = editor.ui.ALIGNMENT.RIGHT,
+            }),
+            editor.ui.resource_field({
+                extensions = { "go" },
+                on_value_changed = function(path)
+                    on_value_changed(path, node_id)
+                end
+            })
+        }
+    end
+
+    return editor.ui.dialog({
+        title = "Quick Configuration Setup",
+        content = editor.ui.grid({
+            padding = editor.ui.PADDING.LARGE,
+            columns = { {}, { grow = true } },
+            children = children
+        }),
+        buttons = {
+            editor.ui.dialog_button({
+                text = "Cancel",
+                default = false
+            }),
+            editor.ui.dialog_button({
+                text = "Save Configuration",
+                result = "save",
+                enabled = false
+            }),
+            editor.ui.dialog_button({
+                text = "Confirm",
+                result = config_id,
+                default = true,
+                enabled = true
+            }),
+        }
+    })
+end)
+
 local unfold_dialog = editor.ui.component(function(props)
     local config_path, set_config_path = editor.ui.use_state("")
     local output_name, set_output_path = editor.ui.use_state(props.scene_name)
     local config_file_severity, set_config_file_severity = editor.ui.use_state(editor.ui.ISSUE_SEVERITY.WARNING)
     local config_file_severity_msg, set_config_file_severity_msg = editor.ui.use_state("Required")
+    local quick_config, set_quick_config = editor.ui.use_state("")
 
     return editor.ui.dialog({
         title = props.title,
@@ -42,7 +108,8 @@ local unfold_dialog = editor.ui.component(function(props)
                                 set_config_file_severity_msg(toggle, "Required")
                                 return
                             end
-                            if path:EndsWith(".lua") then
+
+                            if string.EndsWith(path, ".lua") then
                                 local file_exists = io.CheckFileExists(string.TrimPath(path))
                                 if file_exists then
                                     set_config_file_severity(toggle, editor.ui.ISSUE_SEVERITY.WARNING)
@@ -55,26 +122,54 @@ local unfold_dialog = editor.ui.component(function(props)
                             set_config_file_severity_msg(toggle, "Invalid path")
                         end
                     })
+                },
+                {
+                    editor.ui.button({
+                        text = "Quick Configuration Setup",
+                        icon = editor.ui.ICON.OPEN_RESOURCE,
+                        alignment = editor.ui.ALIGNMENT.RIGHT,
+                        column_span = 2,
+                        on_pressed = function()
+                            local result = editor.ui.show_dialog(quick_config_dialog({
+                                ids = unfold.GetDistinctID(props.scene_path)
+                            }))
+                            if type(result) == "table" then
+                                set_quick_config(toggle, json.encode(result))
+                                set_config_path(toggle, "Quick Configuration")
+                                set_config_file_severity(toggle, editor.ui.ISSUE_SEVERITY.WARNING)
+                                set_config_file_severity_msg(toggle, "Quick Configuration")
+                            end
+                        end
+                    })
                 }
             }
         }),
         buttons = {
             editor.ui.dialog_button({
-                text = "Cancel"
-            }),
-            editor.ui.dialog_button({
-                text = "Quick Configuration Setup",
-                result = "config",
+                text = "Cancel",
+                default = false
             }),
             editor.ui.dialog_button({
                 text = "Create Collection",
-                result = { config_path = config_path, output_name = output_name },
+                result = { quick_config = quick_config, output_name = output_name, config_path = config_path },
                 default = true,
                 enabled = config_path ~= ""
             }),
         }
     })
 end)
+
+local function Unfold(name, scene_path, config_path, save_dialog_path)
+    local output_path = editor.ui.show_external_directory_dialog({
+        title = "Output path",
+        path = save_dialog_path
+    })
+    if output_path then
+        local full_path = output_path .. "/" .. name .. ".collection"
+        unfold.UnfoldFile(scene_path, config_path, full_path)
+        log.Debug("Collection properly created at /" .. full_path:gsub("\\", "/"))
+    end
+end
 
 function M.get_commands()
     return {
@@ -83,34 +178,32 @@ function M.get_commands()
             locations = { "Assets" },
             query = { selection = { type = "resource", cardinality = "one" } },
             active = function(opts)
-                return editor.get(opts.selection, "path"):EndsWith(".gltf")
+                return string.EndsWith(editor.get(opts.selection, "path"), ".gltf")
             end,
             run = function(opts)
                 local scene_path = editor.get(opts.selection, "path")
                 local path, name = string.GetPathAndFile(string.TrimPath(scene_path))
                 name = string.StripExtension(name)
-                local result = editor.ui.show_dialog(unfold_dialog({ title = "Unfold", scene_name = name }))
+                local result = editor.ui.show_dialog(unfold_dialog({
+                    title = "Unfold",
+                    scene_name = name,
+                    scene_path = scene_path
+                }))
 
                 if type(result) == "table" then
+                    local config
+                    if result.config_path == "Quick Configuration" then
+                        config = { _id = json.decode(result.quick_config) }
+                    else
+                        config = result.config_path
+                    end
+
                     if #result.output_name == 0 then
                         name = name
                     else
                         name = result.output_name
                     end
-                    local config_path = result.config_path
-
-                    local output_path = editor.ui.show_external_directory_dialog({
-                        title = "Output path",
-                        path = path
-                    })
-                    if output_path then
-                        local full_path = output_path .. "/" .. name .. ".collection"
-                        unfold.UnfoldFile(scene_path, config_path, full_path)
-                        log.Debug("Collection properly created at /" .. full_path:gsub("\\", "/"))
-                    end
-                elseif type(result) == "string" then
-                    log.Debug(
-                        "This functionality is still missing. Help my anxiety and voices from head win at: https://github.com/Caue-Aron/Unfold")
+                    Unfold(name, scene_path, config, path)
                 end
             end
         }
