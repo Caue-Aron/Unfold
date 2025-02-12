@@ -1,0 +1,94 @@
+local M = {}
+
+-- create a dynamic form
+local function make_dynamic_form()
+    local extensions = { "lua", "collection", "script" }
+    local n = math.random(2, 4)
+    local ret = {}
+    for i = 1, n do
+        ret[i] = {
+            field = "field_" .. tostring(i),
+            required = math.random() > 0.5,
+            extension = extensions
+                [math.random(#extensions)]
+        }
+    end
+    return ret
+end
+
+-- like t[k]=v, but copying if necessary
+local function assoc(t, k, v)
+    t = t or {}
+    if t[k] == v then
+        return t
+    else
+        local ret = {}
+        for key, value in pairs(t) do
+            ret[key] = value
+        end
+        ret[k] = v
+        return ret
+    end
+end
+
+local dialog = editor.ui.component(function(props)
+    local form = props.form
+    local value, set_value = editor.ui.use_state(props.initial_value)
+
+    local rows = {}
+    local valid = true
+    for i = 1, #form do
+        local form_item = form[i]
+        local form_value = value[form_item.field]
+        local issue
+        if form_value and form_value ~= "" and not editor.resource_attributes(form_value).exists then
+            issue = { severity = editor.ui.ISSUE_SEVERITY.ERROR, message = "Does not exist." }
+        elseif form_item.required and (not form_value or form_value == "") then
+            issue = { severity = editor.ui.ISSUE_SEVERITY.WARNING, message = "Required." }
+        end
+        if valid and issue then
+            valid = false
+        end
+        rows[i] = {
+            editor.ui.label({ text = form_item.field, alignment = editor.ui.ALIGNMENT.RIGHT }),
+            editor.ui.resource_field({
+                value = value[form_value],
+                on_value_changed = function(new_value)
+                    set_value(assoc, form_item.field, new_value)
+                end,
+                extensions = { form_item.extension },
+                issue = issue
+            })
+        }
+    end
+    return editor.ui.dialog({
+        title = "Edit form",
+        content = editor.ui.grid({
+            padding = editor.ui.PADDING.LARGE,
+            columns = { {}, { grow = true } },
+            children = rows
+        }),
+        buttons = {
+            editor.ui.dialog_button({ text = "Cancel", cancel = true }),
+            editor.ui.dialog_button({ text = "Commit", default = true, result = value, enabled = valid }),
+        }
+    })
+end)
+
+function M.get_commands()
+    return { {
+        label = "Example dynamic form",
+        locations = { "Edit" },
+        run = function()
+            local form = make_dynamic_form()
+            local result = editor.ui.show_dialog(dialog({ form = form, initial_value = {} }))
+            if result then
+                for key, value in pairs(result) do
+                    print(key, value)
+                end
+            end
+        end
+    } }
+end
+
+return M

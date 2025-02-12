@@ -73,9 +73,16 @@ end)
 local unfold_dialog = editor.ui.component(function(props)
     local config_path, set_config_path = editor.ui.use_state("")
     local output_name, set_output_path = editor.ui.use_state(props.scene_name)
+    local quick_config, set_quick_config = editor.ui.use_state("")
     local config_file_severity, set_config_file_severity = editor.ui.use_state(editor.ui.ISSUE_SEVERITY.WARNING)
     local config_file_severity_msg, set_config_file_severity_msg = editor.ui.use_state("Required")
-    local quick_config, set_quick_config = editor.ui.use_state("")
+
+    local issue
+    if config_file_severity and config_file_severity_msg and
+        config_file_severity ~= "" and config_file_severity_msg ~= ""
+    then
+        issue = { severity = config_file_severity, message = config_file_severity_msg }
+    end
 
     return editor.ui.dialog({
         title = props.title,
@@ -101,25 +108,23 @@ local unfold_dialog = editor.ui.component(function(props)
                     editor.ui.resource_field({
                         title = "Select Configuration file",
                         extensions = { "lua" },
-                        issue = { severity = config_file_severity, message = config_file_severity_msg },
+                        issue = issue,
                         on_value_changed = function(path)
-                            if not path or path == "" then
+                            set_config_path(toggle, "")
+                            if path and path ~= "" and not editor.resource_attributes(path).exists then
+                                set_config_file_severity(toggle, editor.ui.ISSUE_SEVERITY.ERROR)
+                                set_config_file_severity_msg(toggle, "File doesn't exist")
+                            elseif path and path ~= "" and not string.EndsWith(path, ".lua") then
+                                set_config_file_severity(toggle, editor.ui.ISSUE_SEVERITY.ERROR)
+                                set_config_file_severity_msg(toggle, "File must be a Lua Script")
+                            elseif not path or path == "" then
                                 set_config_file_severity(toggle, editor.ui.ISSUE_SEVERITY.WARNING)
                                 set_config_file_severity_msg(toggle, "Required")
-                                return
+                            else
+                                set_config_file_severity(toggle, "")
+                                set_config_file_severity_msg(toggle, "")
+                                set_config_path(toggle, path)
                             end
-
-                            if string.EndsWith(path, ".lua") then
-                                local file_exists = io.CheckFileExists(string.TrimPath(path))
-                                if file_exists then
-                                    set_config_file_severity(toggle, editor.ui.ISSUE_SEVERITY.WARNING)
-                                    set_config_file_severity_msg(toggle, "Required")
-                                    set_config_path(toggle, path)
-                                    return
-                                end
-                            end
-                            set_config_file_severity(toggle, editor.ui.ISSUE_SEVERITY.ERROR)
-                            set_config_file_severity_msg(toggle, "Invalid path")
                         end
                     })
                 },
