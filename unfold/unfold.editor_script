@@ -1,35 +1,61 @@
 local unfold = require 'unfold.unfold'
 local log = require 'unfold.unfold_log'
-local json = require 'unfold.json'
 local M = {}
 
 local function toggle(n, v)
     return v
 end
 
+local function copy(t, o)
+    local ret = {}
+    for key, value in pairs(o) do
+        ret[key] = value
+    end
+    return ret
+end
+
+local function assoc(t, k, v)
+    t = t or {}
+    if t[k] == v then
+        return t
+    else
+        local ret = {}
+        for key, value in pairs(t) do
+            ret[key] = value
+        end
+        ret[k] = v
+        return ret
+    end
+end
+
 local quick_config_dialog = editor.ui.component(function(props)
     local ids = props.ids
     local nodes_ids = ids.nodes
-    local scene_ids = ids.scenes
+    -- local scene_ids = ids.scenes
     local children = {}
-    local config_id = {}
-    local amount_id = #nodes_ids -- + #scene_ids
-    local id_ready, set_id_ready = editor.ui.use_state(0)
+    local config_id, set_config_id = editor.ui.use_state(props.config_id)
+    local file_name, set_file_name = editor.ui.use_state(props.scene_name .. ".config")
 
-    local on_value_changed = function(path, node_id)
-        if string.EndsWith(path, ".go") then
-            local file_exists = io.CheckFileExists(string.TrimPath(path))
-            if file_exists then
-                config_id[node_id] = path
-                return true
-            end
-        end
-        config_id[node_id] = nil
-    end
-
+    local valid = true
     for i = 1, #nodes_ids do
         local node_id = nodes_ids[i]
-        children[#children + 1] = {
+        local path_id = config_id[node_id]
+        local issue
+        if path_id and path_id ~= "" then
+            if not editor.resource_attributes(path_id).exists then
+                issue = { severity = editor.ui.ISSUE_SEVERITY.ERROR, message = "File does not exist" }
+            elseif not string.EndsWith(path_id, ".go") then
+                issue = { severity = editor.ui.ISSUE_SEVERITY.ERROR, message = "File must be a gameobject" }
+            end
+        elseif not path_id or path_id == "" then
+            issue = { severity = editor.ui.ISSUE_SEVERITY.WARNING, message = "Required" }
+        end
+
+        if issue then
+            valid = false
+        end
+
+        children[i + 2] = {
             editor.ui.label({
                 text = node_id,
                 alignment = editor.ui.ALIGNMENT.RIGHT,
@@ -37,11 +63,36 @@ local quick_config_dialog = editor.ui.component(function(props)
             editor.ui.resource_field({
                 extensions = { "go" },
                 on_value_changed = function(path)
-                    on_value_changed(path, node_id)
-                end
+                    set_config_id(assoc, node_id, path)
+                end,
+                issue = issue
             })
         }
     end
+
+    local issue
+    if file_name and file_name:find("[<>:%\"/\\|%?%*]") then
+        issue = { severity = editor.ui.ISSUE_SEVERITY.ERROR, message = "Invalid Name" }
+    elseif not file_name or file_name == "" then
+        issue = { severity = editor.ui.ISSUE_SEVERITY.WARNING, message = "Required" }
+    end
+    children[1] = {
+        editor.ui.label({
+            text = "Config File Name",
+            alignment = editor.ui.ALIGNMENT.RIGHT,
+        }),
+        editor.ui.string_field({
+            value = file_name,
+            on_value_changed = set_file_name,
+            issue = issue
+        })
+    }
+    children[2] = {
+        editor.ui.separator({
+            grow = true,
+            column_span = 2
+        })
+    }
 
     return editor.ui.dialog({
         title = "Quick Configuration Setup",
@@ -57,25 +108,57 @@ local quick_config_dialog = editor.ui.component(function(props)
             }),
             editor.ui.dialog_button({
                 text = "Save Configuration",
-                result = "save",
-                enabled = false
-            }),
-            editor.ui.dialog_button({
-                text = "Confirm",
-                result = config_id,
+                result = { config_id = config_id, file_name = file_name },
                 default = true,
-                enabled = true
+                enabled = valid
             }),
         }
     })
 end)
 
+local function NewConfigFile(scene_path)
+    local path, name = string.GetPathAndFile(scene_path)
+    local result = editor.ui.show_dialog(quick_config_dialog({
+        ids = unfold.GetDistinctID(scene_path),
+        scene_name = string.StripExtension(name),
+        config_id = {}
+    }))
+
+    if type(result) == "table" then
+        local file_name = result.file_name
+        local config_id = result.config_id
+
+        local output_path = editor.ui.show_external_directory_dialog({
+            title = "Output path",
+            path = string.TrimPath(path)
+        })
+
+        if output_path and output_path ~= "" then
+            local config_file, err = io.open(output_path .. "/" .. file_name .. ".lua", "w+")
+            if config_file then
+                local file_content = "---@type UnfoldConfig\nlocal M = {\n\t_id = {"
+                for k, v in pairs(config_id) do
+                    file_content = file_content .. "\n\t\t" .. k .. ' = "' .. v .. '",'
+                end
+                file_content = file_content .. "\n\t}\n}\n\nreturn M"
+
+                config_file:write(file_content)
+                config_file:close()
+                return output_path
+            else
+                error(output_path .. "/" .. file_name .. ".lua")
+            end
+        end
+    end
+end
+
 local unfold_dialog = editor.ui.component(function(props)
     local config_path, set_config_path = editor.ui.use_state("")
     local output_name, set_output_path = editor.ui.use_state(props.scene_name)
-    local quick_config, set_quick_config = editor.ui.use_state("")
+    local quick_config, set_quick_config = editor.ui.use_state(props.quick_config)
     local config_file_severity, set_config_file_severity = editor.ui.use_state(editor.ui.ISSUE_SEVERITY.WARNING)
     local config_file_severity_msg, set_config_file_severity_msg = editor.ui.use_state("Required")
+    local focus, set_focus = editor.ui.use_state(true)
 
     local issue
     if config_file_severity and config_file_severity_msg and
@@ -96,7 +179,8 @@ local unfold_dialog = editor.ui.component(function(props)
                         alignment = editor.ui.ALIGNMENT.RIGHT,
                     }),
                     editor.ui.string_field({
-                        value = props.scene_name,
+                        value = output_name,
+                        enabled = focus,
                         on_value_changed = set_output_path
                     })
                 },
@@ -109,6 +193,7 @@ local unfold_dialog = editor.ui.component(function(props)
                         title = "Select Configuration file",
                         extensions = { "lua" },
                         issue = issue,
+                        enabled = focus,
                         on_value_changed = function(path)
                             set_config_path(toggle, "")
                             if path and path ~= "" and not editor.resource_attributes(path).exists then
@@ -134,16 +219,12 @@ local unfold_dialog = editor.ui.component(function(props)
                         icon = editor.ui.ICON.OPEN_RESOURCE,
                         alignment = editor.ui.ALIGNMENT.RIGHT,
                         column_span = 2,
+                        enabled = focus,
                         on_pressed = function()
-                            local result = editor.ui.show_dialog(quick_config_dialog({
-                                ids = unfold.GetDistinctID(props.scene_path)
-                            }))
-                            if type(result) == "table" then
-                                set_quick_config(toggle, json.encode(result))
-                                set_config_path(toggle, "Quick Configuration")
-                                set_config_file_severity(toggle, editor.ui.ISSUE_SEVERITY.WARNING)
-                                set_config_file_severity_msg(toggle, "Quick Configuration")
-                            end
+                            set_focus(toggle, false)
+                            local new_path = NewConfigFile(props.scene_path)
+                            print(new_path)
+                            set_focus(toggle, true)
                         end
                     })
                 }
@@ -152,13 +233,14 @@ local unfold_dialog = editor.ui.component(function(props)
         buttons = {
             editor.ui.dialog_button({
                 text = "Cancel",
-                default = false
+                default = false,
+                enabled = focus
             }),
             editor.ui.dialog_button({
                 text = "Create Collection",
                 result = { quick_config = quick_config, output_name = output_name, config_path = config_path },
                 default = true,
-                enabled = config_path ~= ""
+                enabled = config_path ~= "" and focus
             }),
         }
     })
@@ -192,13 +274,14 @@ function M.get_commands()
                 local result = editor.ui.show_dialog(unfold_dialog({
                     title = "Unfold",
                     scene_name = name,
-                    scene_path = scene_path
+                    scene_path = scene_path,
+                    quick_config = {}
                 }))
 
                 if type(result) == "table" then
                     local config
                     if result.config_path == "Quick Configuration" then
-                        config = { _id = json.decode(result.quick_config) }
+                        config = { _id = result.quick_config }
                     else
                         config = result.config_path
                     end
@@ -210,6 +293,18 @@ function M.get_commands()
                     end
                     Unfold(name, scene_path, config, path)
                 end
+            end
+        },
+        {
+            label = "Quick Config Setup",
+            locations = { "Assets" },
+            query = { selection = { type = "resource", cardinality = "one" } },
+            active = function(opts)
+                return string.EndsWith(editor.get(opts.selection, "path"), ".gltf")
+            end,
+            run = function(opts)
+                local scene_path = editor.get(opts.selection, "path")
+                NewConfigFile(scene_path)
             end
         }
     }
