@@ -19,8 +19,9 @@
     - [x] Choose between quick `_id` setup and config file
     - [ ] Save previously used config file path
 - [ ] Quick `_id` Setup
-    - [ ] UI to setup `_id` for GLTF scene
-    - [ ] Save the quick `_id` setup as a file for future use
+    - [X] UI to setup `_id` for GLTF scene
+    - [X] Save the quick `_id` setup as a file for future use
+    - [X] Menu option exclusive for quick `_id` setup
 - [ ] Better Modding Options: Enhance modding capabilities
     - [ ] Get suggestions from users (hopefully)
 

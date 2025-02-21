@@ -2,6 +2,11 @@ local unfold = require 'unfold.unfold'
 local log = require 'unfold.unfold_log'
 local M = {}
 
+local function GetProjectDir()
+    local dir = editor.external_file_attributes("game.project").path
+    return dir:sub(1, #dir - 13)
+end
+
 local function toggle(n, v)
     return v
 end
@@ -124,6 +129,8 @@ local function NewConfigFile(scene_path)
         config_id = {}
     }))
 
+
+    print(GetProjectDir())
     if type(result) == "table" then
         local file_name = result.file_name
         local config_id = result.config_id
@@ -223,7 +230,6 @@ local unfold_dialog = editor.ui.component(function(props)
                         on_pressed = function()
                             set_focus(toggle, false)
                             local new_path = NewConfigFile(props.scene_path)
-                            print(new_path)
                             set_focus(toggle, true)
                         end
                     })
